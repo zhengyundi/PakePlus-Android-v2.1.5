@@ -1,11 +1,721 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus</title>
-    </head>
-    <body>
-        PakePlus
-    </body>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>钼含量计算器 - 工业废料回收计价</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2D3748',
+                        secondary: '#4A5568',
+                        accent: '#ED8936',
+                        dark: '#1A202C',
+                        light: '#E2E8F0',
+                        success: '#48BB78',
+                        warning: '#F6AD55',
+                        danger: '#F56565',
+                        info: '#4299E1'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['Roboto Mono', 'monospace']
+                    },
+                    boxShadow: {
+                        'inner-lg': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
+                        'industrial': '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .bg-industrial {
+                background-color: #2D3748;
+                background-image: 
+                    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+                background-size: 20px 20px;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .border-industrial {
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .input-industrial:focus {
+                box-shadow: 0 0 0 3px rgba(237, 137, 54, 0.3);
+                border-color: #ED8936;
+            }
+            .btn-industrial:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            }
+            .btn-industrial:active {
+                transform: translateY(1px);
+                box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            }
+            .panel-gradient {
+                background: linear-gradient(135deg, #2D3748 0%, #1A202C 100%);
+            }
+            .value-highlight {
+                background: linear-gradient(90deg, transparent 0%, rgba(237, 137, 54, 0.2) 50%, transparent 100%);
+            }
+            .grid-pattern {
+                background-image: 
+                    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+                background-size: 10px 10px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+    <!-- 顶部导航栏 -->
+    <header class="bg-industrial text-white shadow-md">
+        <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center mb-4 md:mb-0">
+                <i class="fa fa-calculator text-accent text-3xl mr-3"></i>
+                <h1 class="text-2xl font-bold text-shadow">钼含量计价计算器</h1>
+            </div>
+            <div class="flex space-x-4">
+                <button id="btn-scrap" class="btn-industrial bg-accent hover:bg-orange-600 text-white px-6 py-2 rounded-md transition-all duration-200 flex items-center">
+                    <i class="fa fa-cube mr-2"></i>含钼废钢
+                </button>
+                <button id="btn-shavings" class="btn-industrial bg-secondary hover:bg-gray-600 text-white px-6 py-2 rounded-md transition-all duration-200 flex items-center">
+                    <i class="fa fa-fire mr-2"></i>含钼刨花
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 计算器面板 -->
+        <div class="max-w-4xl mx-auto">
+            <!-- 含钼废钢计算器 -->
+            <div id="panel-scrap" class="panel-gradient rounded-lg shadow-industrial p-6 mb-8 border-industrial grid-pattern">
+                <div class="bg-dark bg-opacity-70 rounded-lg p-6">
+                    <h2 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i class="fa fa-cube text-accent mr-3"></i>
+                        含钼废钢计价计算器
+                    </h2>
+                    
+                    <div class="mb-6">
+                        <p class="text-light mb-2 text-sm">计价公式：Pt×（1-Y）+（Pm÷60%×Y×Z） (元/吨)</p>
+                        <p class="text-gray-400 text-xs mb-4">
+                            其中：Pt表示废钢价格，Y表示钼含量百分比，Pm表示钼铁价格，Z表示钼铁回收折扣值（当Y&lt;0.2%，Z=70%；0.2%≤Y&lt;0.3%，Z=75%；Y≥0.3%，Z=80%），60%表示钼标钢钼含量
+                        </p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-light mb-2 text-sm">废钢价格 (Pt) <span class="text-accent">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">¥</span>
+                                <input type="number" id="pt-scrap" class="input-industrial w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-8 pr-3 text-white focus:outline-none" placeholder="输入废钢价格" required>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-light mb-2 text-sm">钼含量百分比 (Y) <span class="text-accent">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">%</span>
+                                <input type="number" id="y-percent" class="input-industrial w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-8 pr-3 text-white focus:outline-none" placeholder="输入钼含量百分比" step="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-light mb-2 text-sm">钼铁价格 (Pm) <span class="text-accent">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">¥</span>
+                                <input type="number" id="pm-scrap" class="input-industrial w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-8 pr-3 text-white focus:outline-none" placeholder="输入钼铁价格" required>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-light mb-2 text-sm">回收率系数 (Z)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">%</span>
+                                <input type="number" id="z-factor" class="input-industrial w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-8 pr-3 text-white focus:outline-none" readonly>
+                            </div>
+                            <p class="text-gray-400 text-xs mt-1">根据钼含量自动计算：Y&lt;0.2%时Z=70%；0.2%≤Y&lt;0.3%时Z=75%；Y≥0.3%时Z=80%</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-light mb-2 text-sm">废钢重量 (吨)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">吨</span>
+                                <input type="number" id="weight-scrap" class="input-industrial w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-8 pr-3 text-white focus:outline-none" placeholder="输入废钢重量" step="0.01" value="1">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-light mb-2 text-sm">税率调整 (默认12.5%)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">%</span>
+                                <input type="number" id="tax-rate-scrap" class="input-industrial w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-8 pr-3 text-white focus:outline-none" placeholder="输入税率" step="0.01" value="12.5">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-light mb-2 text-sm">费用 (元/吨)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">¥</span>
+                                <input type="number" id="cost-scrap" class="input-industrial w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-8 pr-3 text-white focus:outline-none" placeholder="输入每吨费用" step="0.01" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center">
+                        <button id="calculate-scrap" class="btn-industrial bg-accent hover:bg-orange-600 text-white px-8 py-3 rounded-md transition-all duration-200 flex items-center text-lg">
+                            <i class="fa fa-calculator mr-2"></i>计算价格
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 结果显示区域 -->
+                <div id="result-scrap" class="mt-6 bg-dark bg-opacity-70 rounded-lg p-6 hidden">
+                    <h3 class="text-lg font-bold text-white mb-4">计算结果</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400 text-sm">含税单价 (元/吨)</p>
+                            <p id="unit-price-scrap" class="text-2xl font-bold text-accent value-highlight py-1"></p>
+                        </div>
+                        
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400 text-sm">含税总价 (元)</p>
+                            <p id="total-price-scrap" class="text-2xl font-bold text-accent value-highlight py-1"></p>
+                        </div>
+                        
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400 text-sm">不含税单价 (元/吨)</p>
+                            <p id="unit-price-excl-tax-scrap" class="text-2xl font-bold text-success value-highlight py-1"></p>
+                        </div>
+                        
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400 text-sm">不含税总价 (元)</p>
+                            <p id="total-price-excl-tax-scrap" class="text-2xl font-bold text-success value-highlight py-1"></p>
+                        </div>
+                        
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400 text-sm">费用后单价 (元/吨)</p>
+                            <p id="unit-price-with-cost-scrap" class="text-2xl font-bold text-warning value-highlight py-1"></p>
+                        </div>
+                        
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400 text-sm">费用后总价 (元)</p>
+                            <p id="total-price-with-cost-scrap" class="text-2xl font-bold text-warning value-highlight py-1"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 p-4 bg-gray-800 rounded-lg">
+                        <p class="text-gray-400 text-sm mb-2">计算详情</p>
+                        <div id="calculation-details-scrap" class="text-light text-sm font-mono"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 含钼刨花计算器 -->
+            <div id="panel-shavings" class="panel-gradient rounded-lg shadow-industrial p-6 border-industrial grid-pattern hidden">
+                <div class="bg-dark bg-opacity-70 rounded-lg p-6">
+                    <h2 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i class="fa fa-fire text-accent mr-3"></i>
+                        含钼刨花计价计算器
+                    </h2>
+                    
+                    <div class="mb-6">
+                        <p class="text-light mb-4 text-sm">计价公式：成交价 = 基价 + 钼含量加价</p>
+                    </div>
+                    
+                    <div class="overflow-x-auto mb-6">
+                        <table class="min-w-full bg-gray-800 rounded-lg overflow-hidden">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider border-b border-gray-700">成分区间</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider border-b border-gray-700">计价方式</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-700">
+                                <tr>
+                                    <td class="px-4 py-2 text-sm text-light">0.2% ≤ Mo ≤ 0.25%</td>
+                                    <td class="px-4 py-2 text-sm text-light">300元/吨 + 当期刨花价格</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 text-sm text-light">0.25% ＜ Mo ≤ 0.3%</td>
+                                    <td class="px-4 py-2 text-sm text-light">450元/吨 + 当期刨花价格</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 text-sm text-light">0.3% ＜ Mo ≤ 0.4%</td>
+                                    <td class="px-4 py-2 text-sm text-light">650元/吨 + 当期刨花价格</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 text-sm text-light">Mo ≥ 0.4%</td>
+                                    <td class="px-4 py-2 text-sm text-light">900元/吨 + 当期刨花价格</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-light mb-2 text-sm">当期刨花价格 (元/吨) <span class="text-accent">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">¥</span>
+                                <input type="number" id="base-price" class="input-industrial w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-8 pr-3 text-white focus:outline-none" placeholder="输入当期刨花价格" required>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-light mb-2 text-sm">钼含量 (Mo) <span class="text-accent">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">%</span>
+                                <input type="number" id="mo-content" class="input-industrial w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-8 pr-3 text-white focus:outline-none" placeholder="输入钼含量百分比" step="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-light mb-2 text-sm">刨花重量 (吨)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">吨</span>
+                                <input type="number" id="weight-shavings" class="input-industrial w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-8 pr-3 text-white focus:outline-none" placeholder="输入刨花重量" step="0.01" value="1">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-light mb-2 text-sm">税率调整 (默认12%)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">%</span>
+                                <input type="number" id="tax-rate-shavings" class="input-industrial w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-8 pr-3 text-white focus:outline-none" placeholder="输入税率" step="0.01" value="12">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-light mb-2 text-sm">费用 (元/吨)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">¥</span>
+                                <input type="number" id="cost-shavings" class="input-industrial w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-8 pr-3 text-white focus:outline-none" placeholder="输入每吨费用" step="0.01" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center">
+                        <button id="calculate-shavings" class="btn-industrial bg-accent hover:bg-orange-600 text-white px-8 py-3 rounded-md transition-all duration-200 flex items-center text-lg">
+                            <i class="fa fa-calculator mr-2"></i>计算价格
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 结果显示区域 -->
+                <div id="result-shavings" class="mt-6 bg-dark bg-opacity-70 rounded-lg p-6 hidden">
+                    <h3 class="text-lg font-bold text-white mb-4">计算结果</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400 text-sm">含税单价 (元/吨)</p>
+                            <p id="unit-price-shavings" class="text-2xl font-bold text-accent value-highlight py-1"></p>
+                        </div>
+                        
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400 text-sm">含税总价 (元)</p>
+                            <p id="total-price-shavings" class="text-2xl font-bold text-accent value-highlight py-1"></p>
+                        </div>
+                        
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400 text-sm">不含税单价 (元/吨)</p>
+                            <p id="unit-price-excl-tax-shavings" class="text-2xl font-bold text-success value-highlight py-1"></p>
+                        </div>
+                        
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400 text-sm">不含税总价 (元)</p>
+                            <p id="total-price-excl-tax-shavings" class="text-2xl font-bold text-success value-highlight py-1"></p>
+                        </div>
+                        
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400 text-sm">费用后单价 (元/吨)</p>
+                            <p id="unit-price-with-cost-shavings" class="text-2xl font-bold text-warning value-highlight py-1"></p>
+                        </div>
+                        
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-gray-400 text-sm">费用后总价 (元)</p>
+                            <p id="total-price-with-cost-shavings" class="text-2xl font-bold text-warning value-highlight py-1"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 p-4 bg-gray-800 rounded-lg">
+                        <p class="text-gray-400 text-sm mb-2">计算详情</p>
+                        <div id="calculation-details-shavings" class="text-light text-sm font-mono"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 说明面板 -->
+        <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fa fa-info-circle text-accent mr-3"></i>
+                计价说明
+            </h2>
+            
+            <div class="prose max-w-none">
+                <p class="text-gray-600 mb-4">含钼废钢、含钼刨花中的废钢价格，按《天津钢管制造有限公司废钢收购价格表》执行。</p>
+                
+                <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">含钼废钢计价公式</h3>
+                    <p class="text-gray-700">Pt×（1-Y）+（Pm÷60%×Y×Z） (元/吨)</p>
+                    <ul class="list-disc pl-5 mt-2 text-sm text-gray-600">
+                        <li>Pt表示废钢价格</li>
+                        <li>Y表示钼含量百分比</li>
+                        <li>Pm表示钼铁价格</li>
+                        <li>Z表示钼铁回收折扣值（当Y&lt;0.2%，Z=70%；0.2%≤Y&lt;0.3%，Z=75%；Y≥0.3%，Z=80%）</li>
+                        <li>60%表示钼标钢钼含量</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">含钼刨花计价方式</h3>
+                    <ul class="list-disc pl-5 text-sm text-gray-600">
+                        <li>0.2% ≤ Mo ≤ 0.25%：300元/吨 + 当期刨花价格</li>
+                        <li>0.25% ＜ Mo ≤ 0.3%：450元/吨 + 当期刨花价格</li>
+                        <li>0.3% ＜ Mo ≤ 0.4%：650元/吨 + 当期刨花价格</li>
+                        <li>Mo ≥ 0.4%：900元/吨 + 当期刨花价格</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-industrial text-white py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <p class="text-sm text-gray-400">© 2026 钼含量计价计算器 | 工业废料回收计价系统</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button id="btn-help" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-question-circle mr-1"></i> 帮助
+                    </button>
+                    <button id="btn-about" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-info-circle mr-1"></i> 关于
+                    </button>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 帮助模态框 -->
+    <div id="modal-help" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-dark rounded-lg shadow-lg max-w-lg w-full mx-4 border-industrial">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-white">使用帮助</h3>
+                    <button id="close-help" class="text-gray-400 hover:text-white">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                <div class="text-light">
+                    <h4 class="font-semibold mb-2">含钼废钢计算器使用步骤：</h4>
+                    <ol class="list-decimal pl-5 mb-4 text-sm">
+                        <li>输入型钢价格 (P₁)</li>
+                        <li>输入钼含量检测结果 (N%)</li>
+                        <li>输入钼附加值 (Z%)</li>
+                        <li>输入废钢重量（可选，默认为1吨）</li>
+                        <li>点击"计算价格"按钮</li>
+                    </ol>
+                    
+                    <h4 class="font-semibold mb-2">含钼刨花计算器使用步骤：</h4>
+                    <ol class="list-decimal pl-5 mb-4 text-sm">
+                        <li>输入当期刨花价格</li>
+                        <li>输入钼含量 (Mo)</li>
+                        <li>输入刨花重量（可选，默认为1吨）</li>
+                        <li>点击"计算价格"按钮</li>
+                    </ol>
+                    
+                    <p class="text-sm text-gray-400 mt-4">
+                        注意：本计算器仅供参考，实际价格以最终商务谈判为准。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关于模态框 -->
+    <div id="modal-about" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-dark rounded-lg shadow-lg max-w-lg w-full mx-4 border-industrial">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-white">关于本计算器</h3>
+                    <button id="close-about" class="text-gray-400 hover:text-white">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                <div class="text-light">
+                    <p class="mb-4">
+                        本计算器基于天津钢管制造有限公司废钢收购价格表开发，用于快速计算含钼废钢和含钼刨花的价格。
+                    </p>
+                    <p class="mb-4">
+                        计算公式和价格区间仅供参考，实际价格可能会根据市场变化和商务谈判有所调整。
+                    </p>
+                    <p class="text-sm text-gray-400">
+                        版本：1.0.0<br>
+                        更新日期：2026-01-18
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 面板切换
+            const btnScrap = document.getElementById('btn-scrap');
+            const btnShavings = document.getElementById('btn-shavings');
+            const panelScrap = document.getElementById('panel-scrap');
+            const panelShavings = document.getElementById('panel-shavings');
+            
+            btnScrap.addEventListener('click', function() {
+                panelScrap.classList.remove('hidden');
+                panelShavings.classList.add('hidden');
+                btnScrap.classList.remove('bg-secondary', 'hover:bg-gray-600');
+                btnScrap.classList.add('bg-accent', 'hover:bg-orange-600');
+                btnShavings.classList.remove('bg-accent', 'hover:bg-orange-600');
+                btnShavings.classList.add('bg-secondary', 'hover:bg-gray-600');
+            });
+            
+            btnShavings.addEventListener('click', function() {
+                panelScrap.classList.add('hidden');
+                panelShavings.classList.remove('hidden');
+                btnShavings.classList.remove('bg-secondary', 'hover:bg-gray-600');
+                btnShavings.classList.add('bg-accent', 'hover:bg-orange-600');
+                btnScrap.classList.remove('bg-accent', 'hover:bg-orange-600');
+                btnScrap.classList.add('bg-secondary', 'hover:bg-gray-600');
+            });
+            
+            // 含钼废钢计算器
+            const calculateScrapBtn = document.getElementById('calculate-scrap');
+            const resultScrapDiv = document.getElementById('result-scrap');
+            
+            // 钼含量输入变化时自动计算回收率系数Z
+            document.getElementById('y-percent').addEventListener('input', function() {
+                const yPercent = parseFloat(this.value);
+                let zFactor = 0;
+                
+                if (!isNaN(yPercent)) {
+                    if (yPercent < 0.2) {
+                        zFactor = 70;
+                    } else if (yPercent >= 0.2 && yPercent < 0.3) {
+                        zFactor = 75;
+                    } else {
+                        zFactor = 80;
+                    }
+                    
+                    document.getElementById('z-factor').value = zFactor;
+                } else {
+                    document.getElementById('z-factor').value = '';
+                }
+            });
+            
+            calculateScrapBtn.addEventListener('click', function() {
+                const pt = parseFloat(document.getElementById('pt-scrap').value);
+                const yPercent = parseFloat(document.getElementById('y-percent').value);
+                const pm = parseFloat(document.getElementById('pm-scrap').value);
+                const weight = parseFloat(document.getElementById('weight-scrap').value) || 1;
+                const taxRate = parseFloat(document.getElementById('tax-rate-scrap').value) || 12.5;
+                const cost = parseFloat(document.getElementById('cost-scrap').value) || 0;
+                
+                if (isNaN(pt) || isNaN(yPercent) || isNaN(pm)) {
+                    alert('请填写所有必填字段！');
+                    return;
+                }
+                
+                // 根据钼含量计算回收率系数Z
+                let zFactor = 0;
+                let zRange = '';
+                
+                if (yPercent < 0.2) {
+                    zFactor = 70;
+                    zRange = 'Y < 0.2%';
+                } else if (yPercent >= 0.2 && yPercent < 0.3) {
+                    zFactor = 75;
+                    zRange = '0.2% ≤ Y < 0.3%';
+                } else {
+                    zFactor = 80;
+                    zRange = 'Y ≥ 0.3%';
+                }
+                
+                // 更新Z值显示
+                document.getElementById('z-factor').value = zFactor;
+                
+                // 计算单价（含税）
+                const y = yPercent / 100; // 转换为小数
+                const z = zFactor / 100; // 转换为小数
+                const unitPrice = pt * (1 - y) + (pm / 0.6 * y * z);
+                
+                // 计算不含税价格
+                const taxFactor = taxRate / 100;
+                const unitPriceExclTax = unitPrice * (1 - taxFactor);
+                
+                // 计算费用后价格
+                const unitPriceWithCost = unitPriceExclTax - cost;
+                
+                // 计算总价
+                const totalPrice = unitPrice * weight;
+                const totalPriceExclTax = unitPriceExclTax * weight;
+                const totalPriceWithCost = unitPriceWithCost * weight;
+                
+                // 显示结果
+                document.getElementById('unit-price-scrap').textContent = unitPrice.toFixed(2) + ' 元/吨';
+                document.getElementById('total-price-scrap').textContent = totalPrice.toFixed(2) + ' 元';
+                document.getElementById('unit-price-excl-tax-scrap').textContent = unitPriceExclTax.toFixed(2) + ' 元/吨';
+                document.getElementById('total-price-excl-tax-scrap').textContent = totalPriceExclTax.toFixed(2) + ' 元';
+                document.getElementById('unit-price-with-cost-scrap').textContent = unitPriceWithCost.toFixed(2) + ' 元/吨';
+                document.getElementById('total-price-with-cost-scrap').textContent = totalPriceWithCost.toFixed(2) + ' 元';
+                
+                // 显示计算详情
+                const details = `
+                    Pt = ${pt} 元/吨<br>
+                    Y = ${yPercent}%<br>
+                    Pm = ${pm} 元/吨<br>
+                    Z = ${zFactor}% (${zRange})<br>
+                    税率 = ${taxRate}%<br>
+                    费用 = ${cost} 元/吨<br>
+                    重量 = ${weight} 吨<br><br>
+                    计算公式：Pt×（1-Y）+（Pm÷60%×Y×Z）<br>
+                    含税价格 = ${pt}×（1-${yPercent}%）+（${pm}÷60%×${yPercent}%×${zFactor}%）<br>
+                    含税价格 = ${pt}×${(1 - y).toFixed(4)} +（${pm}÷${0.6}×${y.toFixed(4)}×${z.toFixed(4)}）<br>
+                    含税价格 = ${(pt * (1 - y)).toFixed(2)} + ${(pm / 0.6 * y * z).toFixed(2)}<br>
+                    含税单价 = ${unitPrice.toFixed(2)} 元/吨<br><br>
+                    不含税单价 = ${unitPrice.toFixed(2)} × (1 - ${taxRate}%) = ${unitPriceExclTax.toFixed(2)} 元/吨<br>
+                    费用后单价 = ${unitPriceExclTax.toFixed(2)} - ${cost} = ${unitPriceWithCost.toFixed(2)} 元/吨<br><br>
+                    含税总价 = ${unitPrice.toFixed(2)} × ${weight} = ${totalPrice.toFixed(2)} 元<br>
+                    不含税总价 = ${unitPriceExclTax.toFixed(2)} × ${weight} = ${totalPriceExclTax.toFixed(2)} 元<br>
+                    费用后总价 = ${unitPriceWithCost.toFixed(2)} × ${weight} = ${totalPriceWithCost.toFixed(2)} 元
+                `;
+                document.getElementById('calculation-details-scrap').innerHTML = details;
+                
+                // 显示结果区域
+                resultScrapDiv.classList.remove('hidden');
+                
+                // 滚动到结果区域
+                resultScrapDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            
+            // 含钼刨花计算器
+            const calculateShavingsBtn = document.getElementById('calculate-shavings');
+            const resultShavingsDiv = document.getElementById('result-shavings');
+            
+            calculateShavingsBtn.addEventListener('click', function() {
+                const basePrice = parseFloat(document.getElementById('base-price').value);
+                const moContent = parseFloat(document.getElementById('mo-content').value);
+                const weight = parseFloat(document.getElementById('weight-shavings').value) || 1;
+                
+                if (isNaN(basePrice) || isNaN(moContent)) {
+                    alert('请填写所有必填字段！');
+                    return;
+                }
+                
+                // 确定钼含量加价
+                let moAddition = 0;
+                let range = '';
+                
+                if (moContent >= 0.2 && moContent <= 0.25) {
+                    moAddition = 300;
+                    range = '0.2% ≤ Mo ≤ 0.25%';
+                } else if (moContent > 0.25 && moContent <= 0.3) {
+                    moAddition = 450;
+                    range = '0.25% ＜ Mo ≤ 0.3%';
+                } else if (moContent > 0.3 && moContent <= 0.4) {
+                    moAddition = 650;
+                    range = '0.3% ＜ Mo ≤ 0.4%';
+                } else if (moContent > 0.4) {
+                    moAddition = 900;
+                    range = 'Mo ≥ 0.4%';
+                } else {
+                    alert('钼含量必须大于或等于0.2%！');
+                    return;
+                }
+                
+                // 计算单价和总价
+                const unitPrice = basePrice + moAddition;
+                const totalPrice = unitPrice * weight;
+                
+                // 显示结果
+                document.getElementById('unit-price-shavings').textContent = unitPrice.toFixed(2) + ' 元/吨';
+                document.getElementById('total-price-shavings').textContent = totalPrice.toFixed(2) + ' 元';
+                
+                // 显示计算详情
+                const details = `
+                    当期刨花价格 = ${basePrice} 元/吨<br>
+                    钼含量 = ${moContent}%<br>
+                    重量 = ${weight} 吨<br><br>
+                    钼含量区间：${range}<br>
+                    钼含量加价 = ${moAddition} 元/吨<br><br>
+                    计算公式：成交价 = 基价 + 钼含量加价<br>
+                    成交价 = ${basePrice} + ${moAddition} = ${unitPrice.toFixed(2)} 元/吨<br><br>
+                    总价 = ${unitPrice.toFixed(2)} × ${weight} = ${totalPrice.toFixed(2)} 元
+                `;
+                document.getElementById('calculation-details-shavings').innerHTML = details;
+                
+                // 显示结果区域
+                resultShavingsDiv.classList.remove('hidden');
+                
+                // 滚动到结果区域
+                resultShavingsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            
+            // 模态框控制
+            const btnHelp = document.getElementById('btn-help');
+            const btnAbout = document.getElementById('btn-about');
+            const modalHelp = document.getElementById('modal-help');
+            const modalAbout = document.getElementById('modal-about');
+            const closeHelp = document.getElementById('close-help');
+            const closeAbout = document.getElementById('close-about');
+            
+            btnHelp.addEventListener('click', function() {
+                modalHelp.classList.remove('hidden');
+            });
+            
+            btnAbout.addEventListener('click', function() {
+                modalAbout.classList.remove('hidden');
+            });
+            
+            closeHelp.addEventListener('click', function() {
+                modalHelp.classList.add('hidden');
+            });
+            
+            closeAbout.addEventListener('click', function() {
+                modalAbout.classList.add('hidden');
+            });
+            
+            // 点击模态框外部关闭
+            window.addEventListener('click', function(event) {
+                if (event.target === modalHelp) {
+                    modalHelp.classList.add('hidden');
+                }
+                if (event.target === modalAbout) {
+                    modalAbout.classList.add('hidden');
+                }
+            });
+            
+            // 输入框实时验证
+            const inputs = document.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    // 防止输入负数
+                    if (this.value < 0) {
+                        this.value = '';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
 </html>
