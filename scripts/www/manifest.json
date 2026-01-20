@@ -1,0 +1,21 @@
+{
+  "name": "钼含量计算器",
+  "short_name": "钼计算器",
+  "description": "天津钢管含钼废钢和刨花计价计算器",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#2D3748",
+  "theme_color": "#2D3748",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
