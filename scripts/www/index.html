@@ -6,11 +6,12 @@
     <meta name="theme-color" content="#2D3748">
     <meta name="description" content="天津钢管含钼废钢和刨花计价计算器">
     <title>钼含量计算器 - 工业废料回收计价</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <!-- 针对移动设备的优化 -->
+    
+    <!-- 网页图标 -->
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
+    
+    <!-- 关键CSS内联以提高首屏加载速度 -->
     <style>
         /* 防止iOS上的滚动卡顿 */
         * {
@@ -24,7 +25,29 @@
         input {
             font-size: 16px !important;
         }
+        /* 基础样式 */
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f3f4f6;
+            min-height: 100vh;
+        }
+        .hidden { 
+            display: none !important; 
+        }
     </style>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 外部CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Tailwind 配置 -->
     <script>
         tailwind.config = {
             theme: {
@@ -52,6 +75,8 @@
             }
         }
     </script>
+    
+    <!-- 自定义工具类 -->
     <style type="text/tailwindcss">
         @layer utilities {
             .bg-industrial {
@@ -128,7 +153,7 @@
                     <div class="mb-6">
                         <p class="text-light mb-2 text-sm">计价公式：Pt×（1-Y）+（Pm÷60%×Y×Z） (元/吨)</p>
                         <p class="text-gray-400 text-xs mb-4">
-                            其中：Pt表示废钢价格，Y表示钼含量百分比，Pm表示钼铁价格，Z表示钼铁回收折扣值（当Y&lt;0.2%，Z=70%；0.2%≤Y&lt;0.3%，Z=75%；Y≥0.3%，Z=80%），60%表示钼标钢钼含量
+                            其中：Pt表示废钢价格，Y表示钼含量百分比，Pm表示钼铁价格，Z表示钼铁回收折扣值（当Y&lt;0.2%，Z=70%；0.2%≤Y&lt;0.3%，Z=75%；Y≥0.3%，Z=80%），60%表示60钼铁的钼含量
                         </p>
                     </div>
                     
@@ -542,8 +567,8 @@
                         计算公式和价格区间仅供参考，实际价格可能会根据市场变化和商务谈判有所调整。
                     </p>
                     <p class="text-sm text-gray-400">
-                        版本：1.0.0<br>
-                        更新日期：2026-01-18
+                        版本：1.0.2<br>
+                        更新日期：2026-01-20
                     </p>
                     <p class="text-sm text-gray-400 mt-4">
                         如侵犯到您的权益，请及时通知我们，我们会及时处理，对我们有任何投诉或建议，请与我们联系。<br>
@@ -553,358 +578,8 @@
             </div>
         </div>
     </div>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- JavaScript -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 面板切换
-            const btnScrap = document.getElementById('btn-scrap');
-            const btnShavings = document.getElementById('btn-shavings');
-            const panelScrap = document.getElementById('panel-scrap');
-            const panelShavings = document.getElementById('panel-shavings');
-            
-            const infoScrap = document.getElementById('info-scrap');
-            const infoShavings = document.getElementById('info-shavings');
-
-            btnScrap.addEventListener('click', function() {
-                panelScrap.classList.remove('hidden');
-                panelShavings.classList.add('hidden');
-                infoScrap.classList.remove('hidden');
-                infoShavings.classList.add('hidden');
-                btnScrap.classList.remove('bg-secondary', 'hover:bg-gray-600');
-                btnScrap.classList.add('bg-accent', 'hover:bg-orange-600');
-                btnShavings.classList.remove('bg-accent', 'hover:bg-orange-600');
-                btnShavings.classList.add('bg-secondary', 'hover:bg-gray-600');
-            });
-            
-            btnShavings.addEventListener('click', function() {
-                panelScrap.classList.add('hidden');
-                panelShavings.classList.remove('hidden');
-                infoScrap.classList.add('hidden');
-                infoShavings.classList.remove('hidden');
-                btnShavings.classList.remove('bg-secondary', 'hover:bg-gray-600');
-                btnShavings.classList.add('bg-accent', 'hover:bg-orange-600');
-                btnScrap.classList.remove('bg-accent', 'hover:bg-orange-600');
-                btnScrap.classList.add('bg-secondary', 'hover:bg-gray-600');
-            });
-            
-            // 含钼废钢计算器
-            const calculateScrapBtn = document.getElementById('calculate-scrap');
-            const resetScrapBtn = document.getElementById('reset-scrap');
-            const resultScrapDiv = document.getElementById('result-scrap');
-            
-            // 重置按钮事件
-            resetScrapBtn.addEventListener('click', function() {
-                document.getElementById('pt-scrap').value = '';
-                document.getElementById('y-percent').value = '';
-                document.getElementById('pm-scrap').value = '';
-                document.getElementById('z-factor').value = '';
-                document.getElementById('weight-scrap').value = '1';
-                document.getElementById('tax-rate-scrap').value = '12.5';
-                document.getElementById('cost-scrap').value = '0';
-                resultScrapDiv.classList.add('hidden');
-            });
-            
-            // 钼含量输入变化时自动计算回收率系数Z
-            document.getElementById('y-percent').addEventListener('input', function() {
-                const yPercent = parseFloat(this.value);
-                let zFactor = 0;
-                
-                if (!isNaN(yPercent)) {
-                    if (yPercent < 0.2) {
-                        zFactor = 70;
-                    } else if (yPercent >= 0.2 && yPercent < 0.3) {
-                        zFactor = 75;
-                    } else {
-                        zFactor = 80;
-                    }
-                    
-                    document.getElementById('z-factor').value = zFactor;
-                } else {
-                    document.getElementById('z-factor').value = '';
-                }
-            });
-            
-            calculateScrapBtn.addEventListener('click', function() {
-                const pt = parseFloat(document.getElementById('pt-scrap').value);
-                const yPercent = parseFloat(document.getElementById('y-percent').value);
-                const pm = parseFloat(document.getElementById('pm-scrap').value);
-                const weight = parseFloat(document.getElementById('weight-scrap').value) || 1;
-                const taxRate = parseFloat(document.getElementById('tax-rate-scrap').value) || 12.5;
-                const cost = parseFloat(document.getElementById('cost-scrap').value) || 0;
-                
-                if (isNaN(pt) || isNaN(yPercent) || isNaN(pm)) {
-                    alert('请填写所有必填字段！');
-                    return;
-                }
-                
-                // 根据钼含量计算回收率系数Z
-                let zFactor = 0;
-                let zRange = '';
-                
-                if (yPercent < 0.2) {
-                    zFactor = 70;
-                    zRange = 'Y < 0.2%';
-                } else if (yPercent >= 0.2 && yPercent < 0.3) {
-                    zFactor = 75;
-                    zRange = '0.2% ≤ Y < 0.3%';
-                } else {
-                    zFactor = 80;
-                    zRange = 'Y ≥ 0.3%';
-                }
-                
-                // 更新Z值显示
-                document.getElementById('z-factor').value = zFactor;
-                
-                // 计算单价（含税）
-                const y = yPercent / 100; // 转换为小数
-                const z = zFactor / 100; // 转换为小数
-                const unitPrice = pt * (1 - y) + (pm / 0.6 * y * z);
-                
-                // 计算不含税价格
-                const taxFactor = taxRate / 100;
-                const unitPriceExclTax = unitPrice * (1 - taxFactor);
-                
-                // 计算费用后价格
-                const unitPriceWithCost = unitPriceExclTax - cost;
-                
-                // 计算总价
-                const totalPrice = unitPrice * weight;
-                const totalPriceExclTax = unitPriceExclTax * weight;
-                const totalPriceWithCost = unitPriceWithCost * weight;
-                
-                // 显示结果
-                document.getElementById('unit-price-scrap').textContent = unitPrice.toFixed(2) + ' 元/吨';
-                document.getElementById('unit-price-excl-tax-scrap').textContent = unitPriceExclTax.toFixed(2) + ' 元/吨';
-                document.getElementById('unit-price-with-cost-scrap').textContent = unitPriceWithCost.toFixed(2) + ' 元/吨';
-
-                // 根据重量是否为0决定是否显示总价区域
-                const totalPriceScrapSection = document.getElementById('total-price-scrap-section');
-
-                if (weight > 0) {
-                    document.getElementById('total-price-scrap').textContent = totalPrice.toFixed(2) + ' 元';
-                    document.getElementById('total-price-excl-tax-scrap').textContent = totalPriceExclTax.toFixed(2) + ' 元';
-                    document.getElementById('total-price-with-cost-scrap').textContent = totalPriceWithCost.toFixed(2) + ' 元';
-                    totalPriceScrapSection.classList.remove('hidden');
-                } else {
-                    totalPriceScrapSection.classList.add('hidden');
-                }
-                
-                // 显示计算详情
-                const details = `
-                    Pt = ${pt} 元/吨<br>
-                    Y = ${yPercent}%<br>
-                    Pm = ${pm} 元/吨<br>
-                    Z = ${zFactor}% (${zRange})<br>
-                    税率 = ${taxRate}%<br>
-                    费用 = ${cost} 元/吨<br>
-                    重量 = ${weight} 吨<br><br>
-                    计算公式：Pt×（1-Y）+（Pm÷60%×Y×Z）<br>
-                    含税价格 = ${pt}×（1-${yPercent}%）+（${pm}÷60%×${yPercent}%×${zFactor}%）<br>
-                    含税价格 = ${pt}×${(1 - y).toFixed(4)} +（${pm}÷${0.6}×${y.toFixed(4)}×${zFactor/100}）<br>
-                    含税价格 = ${(pt * (1 - y)).toFixed(2)} + ${(pm / 0.6 * y * z).toFixed(2)}<br>
-                    含税单价 = ${unitPrice.toFixed(2)} 元/吨<br><br>
-                    不含税单价 = ${unitPrice.toFixed(2)} × (1 - ${taxRate}%) = ${unitPriceExclTax.toFixed(2)} 元/吨<br>
-                    费用后单价 = ${unitPriceExclTax.toFixed(2)} - ${cost} = ${unitPriceWithCost.toFixed(2)} 元/吨<br><br>
-                    含税总价 = ${unitPrice.toFixed(2)} × ${weight} = ${totalPrice.toFixed(2)} 元<br>
-                    不含税总价 = ${unitPriceExclTax.toFixed(2)} × ${weight} = ${totalPriceExclTax.toFixed(2)} 元<br>
-                    费用后总价 = ${unitPriceWithCost.toFixed(2)} × ${weight} = ${totalPriceWithCost.toFixed(2)} 元
-                `;
-                document.getElementById('calculation-details-scrap').innerHTML = details;
-                
-                // 显示结果区域
-                resultScrapDiv.classList.remove('hidden');
-                
-                // 滚动到结果区域
-                resultScrapDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-            
-            // 含钼刨花计算器
-            const calculateShavingsBtn = document.getElementById('calculate-shavings');
-            const resetShavingsBtn = document.getElementById('reset-shavings');
-            const resultShavingsDiv = document.getElementById('result-shavings');
-            
-            // 重置按钮事件
-            resetShavingsBtn.addEventListener('click', function() {
-                document.getElementById('base-price').value = '';
-                document.getElementById('mo-content').value = '';
-                document.getElementById('weight-shavings').value = '1';
-                document.getElementById('tax-rate-shavings').value = '12';
-                document.getElementById('cost-shavings').value = '0';
-                resultShavingsDiv.classList.add('hidden');
-            });
-            
-            calculateShavingsBtn.addEventListener('click', function() {
-                const basePrice = parseFloat(document.getElementById('base-price').value);
-                const moContent = parseFloat(document.getElementById('mo-content').value);
-                const weight = parseFloat(document.getElementById('weight-shavings').value) || 1;
-                const taxRate = parseFloat(document.getElementById('tax-rate-shavings').value) || 12;
-                const cost = parseFloat(document.getElementById('cost-shavings').value) || 0;
-                
-                if (isNaN(basePrice) || isNaN(moContent)) {
-                    alert('请填写所有必填字段！');
-                    return;
-                }
-                
-                // 确定钼含量加价
-                let moAddition = 0;
-                let range = '';
-                
-                if (moContent >= 0.15 && moContent < 0.2) {
-                    moAddition = 300;
-                    range = '0.15% ≤ Mo < 0.2%';
-                } else if (moContent >= 0.2 && moContent < 0.3) {
-                    moAddition = 450;
-                    range = '0.2% ≤ Mo < 0.3%';
-                } else if (moContent >= 0.3 && moContent < 0.4) {
-                    moAddition = 650;
-                    range = '0.3% ≤ Mo < 0.4%';
-                } else if (moContent >= 0.4) {
-                    moAddition = 900;
-                    range = 'Mo ≥ 0.4%';
-                } else {
-                    alert('钼含量必须大于或等于0.15%！');
-                    return;
-                }
-                
-                // 计算单价（含税）
-                const unitPrice = basePrice + moAddition;
-                
-                // 计算不含税价格
-                const taxFactor = taxRate / 100;
-                const unitPriceExclTax = unitPrice * (1 - taxFactor);
-                
-                // 计算费用后价格
-                const unitPriceWithCost = unitPriceExclTax - cost;
-                
-                // 计算总价
-                const totalPrice = unitPrice * weight;
-                const totalPriceExclTax = unitPriceExclTax * weight;
-                const totalPriceWithCost = unitPriceWithCost * weight;
-                
-                // 显示结果
-                document.getElementById('unit-price-shavings').textContent = unitPrice.toFixed(2) + ' 元/吨';
-                document.getElementById('unit-price-excl-tax-shavings').textContent = unitPriceExclTax.toFixed(2) + ' 元/吨';
-                document.getElementById('unit-price-with-cost-shavings').textContent = unitPriceWithCost.toFixed(2) + ' 元/吨';
-
-                // 根据重量是否为0决定是否显示总价区域
-                const totalPriceShavingsSection = document.getElementById('total-price-shavings-section');
-
-                if (weight > 0) {
-                    document.getElementById('total-price-shavings').textContent = totalPrice.toFixed(2) + ' 元';
-                    document.getElementById('total-price-excl-tax-shavings').textContent = totalPriceExclTax.toFixed(2) + ' 元';
-                    document.getElementById('total-price-with-cost-shavings').textContent = totalPriceWithCost.toFixed(2) + ' 元';
-                    totalPriceShavingsSection.classList.remove('hidden');
-                } else {
-                    totalPriceShavingsSection.classList.add('hidden');
-                }
-                
-                // 显示计算详情
-                const details = `
-                    当期刨花价格 = ${basePrice} 元/吨<br>
-                    钼含量 = ${moContent}%<br>
-                    税率 = ${taxRate}%<br>
-                    费用 = ${cost} 元/吨<br>
-                    重量 = ${weight} 吨<br><br>
-                    钼含量区间：${range}<br>
-                    钼含量加价 = ${moAddition} 元/吨<br><br>
-                    计算公式：成交价 = 基价 + 钼含量加价<br>
-                    含税价格 = ${basePrice} + ${moAddition} = ${unitPrice.toFixed(2)} 元/吨<br><br>
-                    不含税单价 = ${unitPrice.toFixed(2)} × (1 - ${taxRate}%) = ${unitPriceExclTax.toFixed(2)} 元/吨<br>
-                    费用后单价 = ${unitPriceExclTax.toFixed(2)} - ${cost} = ${unitPriceWithCost.toFixed(2)} 元/吨<br><br>
-                    含税总价 = ${unitPrice.toFixed(2)} × ${weight} = ${totalPrice.toFixed(2)} 元<br>
-                    不含税总价 = ${unitPriceExclTax.toFixed(2)} × ${weight} = ${totalPriceExclTax.toFixed(2)} 元<br>
-                    费用后总价 = ${unitPriceWithCost.toFixed(2)} × ${weight} = ${totalPriceWithCost.toFixed(2)} 元
-                `;
-                document.getElementById('calculation-details-shavings').innerHTML = details;
-                
-                // 显示结果区域
-                resultShavingsDiv.classList.remove('hidden');
-                
-                // 滚动到结果区域
-                resultShavingsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-            
-            // 计算详情折叠控制
-            const toggleDetailsScrap = document.getElementById('toggle-details-scrap');
-            const toggleDetailsShavings = document.getElementById('toggle-details-shavings');
-            const calculationDetailsScrapContainer = document.getElementById('calculation-details-scrap-container');
-            const calculationDetailsShavingsContainer = document.getElementById('calculation-details-shavings-container');
-
-            toggleDetailsScrap.addEventListener('click', function() {
-                calculationDetailsScrapContainer.classList.toggle('hidden');
-                const icon = this.querySelector('i');
-                if (calculationDetailsScrapContainer.classList.contains('hidden')) {
-                    icon.classList.remove('fa-chevron-up');
-                    icon.classList.add('fa-chevron-down');
-                } else {
-                    icon.classList.remove('fa-chevron-down');
-                    icon.classList.add('fa-chevron-up');
-                }
-            });
-
-            toggleDetailsShavings.addEventListener('click', function() {
-                calculationDetailsShavingsContainer.classList.toggle('hidden');
-                const icon = this.querySelector('i');
-                if (calculationDetailsShavingsContainer.classList.contains('hidden')) {
-                    icon.classList.remove('fa-chevron-up');
-                    icon.classList.add('fa-chevron-down');
-                } else {
-                    icon.classList.remove('fa-chevron-down');
-                    icon.classList.add('fa-chevron-up');
-                }
-            });
-
-            // 模态框控制
-            const btnHelp = document.getElementById('btn-help');
-            const btnAbout = document.getElementById('btn-about');
-            const modalHelp = document.getElementById('modal-help');
-            const modalAbout = document.getElementById('modal-about');
-            const closeHelp = document.getElementById('close-help');
-            const closeAbout = document.getElementById('close-about');
-            
-            btnHelp.addEventListener('click', function() {
-                modalHelp.classList.remove('hidden');
-            });
-            
-            btnAbout.addEventListener('click', function() {
-                modalAbout.classList.remove('hidden');
-            });
-            
-            closeHelp.addEventListener('click', function() {
-                modalHelp.classList.add('hidden');
-            });
-            
-            closeAbout.addEventListener('click', function() {
-                modalAbout.classList.add('hidden');
-            });
-            
-            // 点击模态框外部关闭
-            window.addEventListener('click', function(event) {
-                if (event.target === modalHelp) {
-                    modalHelp.classList.add('hidden');
-                }
-                if (event.target === modalAbout) {
-                    modalAbout.classList.add('hidden');
-                }
-            });
-            
-            // 输入框实时验证
-            const inputs = document.querySelectorAll('input[type="number"]');
-            inputs.forEach(input => {
-                input.addEventListener('input', function() {
-                    // 防止输入负数
-                    if (this.value < 0) {
-                        this.value = '';
-                    }
-                });
-            });
-        });
-    </script>
+    <script src="js/main.js" defer></script>
 </body>
 </html>
